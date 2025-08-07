@@ -23,6 +23,9 @@
 - change to nnunet default (five random folds) when we more scans
   - in that case just skip this step
 
+
+## Training and inference
+
 - train nnunet:
   - `CUDA_VISIBLE_DEVICES=0 nnUNetv2_train 001 3d_fullres 0` where 001 or 002 is the dataset and 0 is the fold
   - n.b. nnUNet_raw not required if _processed exists
@@ -35,3 +38,13 @@
 - re-import the model
   - first set the nnUNet paths to somewhere that doesn't overlap the original
   - `nnUNetv2_install_pretrained_model_from_zip exported.zip`
+
+
+## SageMaker deployment
+
+- to deploy given a trained nnUNet folder:
+  - `cd inference`
+  - `python deploy.py --stack dev --nnunet-path ~/remote/salina/projects/orthovis/nnUNet_results/Dataset001_Ankle_Binary/nnUNetTrainer__nnUNetPlans__3d_fullres --profile AdministratorAccess-643058308155`
+- to undeploy:
+  - `python deploy.py --undeploy --stack dev --profile AdministratorAccess-643058308155`
+- test locally with `python test_inference_local.py`
