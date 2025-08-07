@@ -10,7 +10,7 @@ converted_folder = f'/home/paul/projects/orthovis/ankle-data/split-and-curated'
 scans = {
     'CT1': {'ct_subpath': 'daniela/4 Unnamed Series.nrrd', 'seg_subpath': 'daniela/Segmentation-cortical.nrrd'},
     'CT2': {'ct_subpath': 'daniela/3 Unnamed Series.nrrd', 'seg_subpath': 'daniela/Segmentation-full.nrrd'},
-    'CT4': {'ct_subpath': 'daniela-with-fixed-volume/402 Unnamed Series.nrrd', 'seg_subpath': 'daniela-with-fixed-volume/Segmentation.nrrd'},
+    'CT4': {'ct_subpath': 'daniela-re-fixed/402 Unnamed Series_1.nrrd', 'seg_subpath': 'daniela-re-fixed/Segmentation.nrrd'},
 }
 
 
