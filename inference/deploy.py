@@ -240,7 +240,7 @@ def deploy(sm_session, sm_client, autoscaling_client, cw_client, boto_session, s
         Dimensions=[
             { 'Name':'EndpointName', 'Value':endpoint_name },
         ],
-        Period=30,
+        Period=60,
         AlarmActions=[step_scaling_policy_arn]
     )
     if response['ResponseMetadata']['HTTPStatusCode'] != 200:
