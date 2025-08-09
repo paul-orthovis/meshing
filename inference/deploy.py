@@ -26,6 +26,11 @@ def get_endpoint_name(stack):
 def get_resource_id_for_autoscaling(stack):
     return f'endpoint/{get_endpoint_name(stack)}/variant/{variant_name}'
 
+def get_sns_topics(stack):
+    return {
+        'SuccessTopic': f'arn:aws:sns:eu-west-1:643058308155:orthovis-{stack}-meshing-completed', 
+        'ErrorTopic': f'arn:aws:sns:eu-west-1:643058308155:orthovis-{stack}-meshing-failed',
+    }
 
 def create_sagemaker_model_package(model_folder_path):
     """
@@ -131,10 +136,7 @@ def deploy(sm_session, sm_client, autoscaling_client, cw_client, boto_session, s
         AsyncInferenceConfig={
             "OutputConfig": {
                 "S3OutputPath": f"s3://orthovis-{stack}-meshing-results",
-                # "NotificationConfig": {
-                #   "SuccessTopic": success_topic,
-                #   "ErrorTopic": error_topic,
-                # }
+                "NotificationConfig": get_sns_topics(stack)
             },
             "ClientConfig": {
                 "MaxConcurrentInvocationsPerInstance": 2,
