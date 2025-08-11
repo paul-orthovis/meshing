@@ -1,5 +1,6 @@
 import zmesh
 import trimesh
+import numpy as np
 
 
 def convert_array_to_meshes(segmentation, spacing, label_to_name):
@@ -23,5 +24,12 @@ def convert_array_to_meshes(segmentation, spacing, label_to_name):
         )
         for cc_idx, cc_mesh in enumerate(trimesh.Trimesh(vertices=mesh.vertices, faces=mesh.faces).split()):
             meshes[f'{label_to_name[label]}_{cc_idx}'] = cc_mesh
+
+    # Translate vertices so the overall centroid (across all CC's) is at the origin
+    centroid = np.mean(np.concatenate([mesh.vertices for mesh in meshes.values()], axis=0), axis=0)
+    meshes = {
+        mesh_id: trimesh.Trimesh(vertices=mesh.vertices - centroid, faces=mesh.faces)
+        for mesh_id, mesh in meshes.items()
+    }
 
     return meshes
