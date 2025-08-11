@@ -76,6 +76,6 @@ def transform_fn(predictor, request_body, content_type, accept):
     # TODO: isotropic remeshing (and then disable reduction_factor in zmesh)
 
     return [
-        {'vertices': mesh.vertices.tolist(), 'faces': mesh.faces.tolist()}
-        for mesh in meshes.values()
+        {'id': mesh_id, 'vertices': mesh.vertices.tolist(), 'faces': mesh.faces.tolist()}
+        for mesh_id, mesh in enumerate(meshes.values())
     ]
