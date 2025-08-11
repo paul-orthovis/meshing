@@ -49,10 +49,10 @@ def transform_fn(predictor, request_body, content_type, accept):
         dicom_names = reader.GetGDCMSeriesFileNames(dicom_dir)
         reader.SetFileNames(dicom_names)
         image = reader.Execute()
-        size = image.GetSize()
-        logger.info(f"Image size: {size[0]} x {size[1]} x {size[2]}")
-        spacing = image.GetSpacing()
-        logger.info(f"Image spacing: {spacing[0]} x {spacing[1]} x {spacing[2]}")
+        size_xyz = image.GetSize()
+        logger.info(f"Image size: {size_xyz[0]} x {size_xyz[1]} x {size_xyz[2]}")
+        spacing_xyz_mm = image.GetSpacing()  # x, y, z
+        logger.info(f"Image spacing: {spacing_xyz_mm[0]:.1f} x {spacing_xyz_mm[1]:.1f} x {spacing_xyz_mm[2]:.1f} mm")
         
         # Write the image as NIfTI format to temporary directory
         nifti_path = os.path.join(temp_dir, 'volume.nii.gz')
@@ -64,15 +64,18 @@ def transform_fn(predictor, request_body, content_type, accept):
         #  That'd require our own logic for slice ordering (and ensuring it agrees with that used for training!)
 
         # Run nnUNet prediction, without writing to disk
-        predicted_labels = predictor.predict_from_files_sequential(
+        predicted_labels_zyx = predictor.predict_from_files_sequential(
             [[nifti_path]],
             None,  # i.e. return in memory, not on disk
         )[0]
+        predicted_labels_xyz = predicted_labels_zyx.transpose(2, 1, 0)
+
+    assert predicted_labels_xyz.shape == size_xyz, f"Predicted labels shape {predicted_labels_xyz.shape} does not match image size {size_xyz}"
 
     # Apply zmesh to convert segmentation voxels to meshes
-    # TODO: make sure spacing has correct axis order (and we understand how vertex coordinates are given)
-    meshes = meshing.convert_array_to_meshes(predicted_labels, spacing)
-    
+    # Mesh vertices will be indexed xyz, with z still the inter-slice axis
+    meshes = meshing.convert_array_to_meshes(predicted_labels_xyz, spacing_xyz_mm)
+
     # TODO: isotropic remeshing (and then disable reduction_factor in zmesh)
 
     return [
