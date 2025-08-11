@@ -24,7 +24,7 @@ def model_fn(model_dir):
     )
     files = [os.path.relpath(os.path.join(dp, f), model_dir) for dp, dn, filenames in os.walk(model_dir) for f in filenames]
     logger.debug(f'model_dir: {model_dir}, files: {files}')
-    predictor.initialize_from_trained_model_folder(f'{model_dir}/model', use_folds=None, checkpoint_name='checkpoint_best.pth')
+    predictor.initialize_from_trained_model_folder(f'{model_dir}/model', use_folds=['all'], checkpoint_name='checkpoint_best.pth')
     return predictor
 
 

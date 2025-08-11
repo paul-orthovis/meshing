@@ -69,7 +69,9 @@ def create_sagemaker_model_package(model_folder_path):
         # FIXME: only copy the relevant stuff (so not progress.png and similar -- see the nnunet export script; restrict to one fold if relevant!)
         model_dir = os.path.join(temp_dir, 'model')
         shutil.copytree(model_folder_path, model_dir)
-        
+
+        assert os.path.exists(f'{model_dir}/fold_all'), 'fold_all does not exist in model folder -- inference script will fail!'
+
         # Create .tar.gz file
         filename = 'model_and_code.tar.gz'
         with tarfile.open(filename, 'w:gz') as tar:
