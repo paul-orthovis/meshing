@@ -72,13 +72,15 @@ def transform_fn(predictor, request_body, content_type, accept):
 
     assert predicted_labels_xyz.shape == size_xyz, f"Predicted labels shape {predicted_labels_xyz.shape} does not match image size {size_xyz}"
 
+    label_to_name = {label: name for name, label in predictor.label_manager.label_dict.items()}
+
     # Apply zmesh to convert segmentation voxels to meshes
     # Mesh vertices will be indexed xyz, with z still the inter-slice axis
-    meshes = meshing.convert_array_to_meshes(predicted_labels_xyz, spacing_xyz_mm)
+    meshes = meshing.convert_array_to_meshes(predicted_labels_xyz, spacing_xyz_mm, label_to_name)
 
     # TODO: isotropic remeshing (and then disable reduction_factor in zmesh)
 
     return [
         {'id': mesh_id, 'vertices': mesh.vertices.tolist(), 'faces': mesh.faces.tolist()}
-        for mesh_id, mesh in enumerate(meshes.values())
+        for mesh_id, mesh in meshes.items()
     ]

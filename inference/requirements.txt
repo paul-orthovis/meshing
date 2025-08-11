@@ -1,3 +1,4 @@
 SimpleITK
 nnunetv2
 zmesh
+trimesh
