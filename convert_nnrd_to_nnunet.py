@@ -3,7 +3,9 @@ import re
 import json
 import glob
 import fastremap
+import numpy as np
 import SimpleITK as sitk
+from collections import defaultdict
 
 
 nrrds_dir = "/home/paul/projects/orthovis/ankle-data/split-and-curated"
@@ -42,12 +44,34 @@ def relabel(seg_nrrd, binary_or_multiclass):
     seg_arr = sitk.GetArrayFromImage(seg_nrrd)
     ids = [int(key.split('_')[0][7:]) for key in seg_nrrd.GetMetaDataKeys() if re.match(r'Segment\d+_LabelValue', key)]
     assert len(ids) == len(set(ids)), 'Duplicate IDs found'
+
     label_to_bone = {}
-    for N in ids:
-        seg_id = seg_nrrd.GetMetaData(f'Segment{N}_LabelValue')
-        seg_name = seg_nrrd.GetMetaData(f'Segment{N}_Name').replace(' ', '_')
-        print(f'{seg_id}: {seg_name}')
-        label_to_bone[int(seg_id)] = seg_name.split('_')[0]
+    if seg_nrrd.GetNumberOfComponentsPerPixel() == 1:
+        assert seg_arr.ndim == 3
+        for N in ids:
+            seg_id = seg_nrrd.GetMetaData(f'Segment{N}_LabelValue')
+            seg_name = seg_nrrd.GetMetaData(f'Segment{N}_Name').replace(' ', '_')
+            print(f'{seg_id}: {seg_name}')
+            label_to_bone[int(seg_id)] = seg_name.split('_')[0]
+    else:
+        # Slicer sometimes uses multiple layers, presumably due to overlaps; we merge these, arbitrarily favouring later layers
+        assert seg_arr.ndim == 4
+        assert seg_arr.shape[-1] == seg_nrrd.GetNumberOfComponentsPerPixel()
+        layer_to_label_to_new_label = defaultdict(lambda: {})
+        label_to_bone = {}
+        for N in ids:
+            layer_id = int(seg_nrrd.GetMetaData(f'Segment{N}_Layer'))
+            label_id = int(seg_nrrd.GetMetaData(f'Segment{N}_LabelValue'))
+            seg_name = seg_nrrd.GetMetaData(f'Segment{N}_Name').replace(' ', '_')
+            new_label = len(label_to_bone) + 1
+            layer_to_label_to_new_label[layer_id][label_id] = new_label
+            label_to_bone[new_label] = seg_name.split('_')[0]
+        new_seg = np.zeros_like(seg_arr[..., 0])
+        for layer_id, label_to_new_label in layer_to_label_to_new_label.items():
+            orig_layer = seg_arr[..., layer_id]
+            new_layer = fastremap.remap(orig_layer, {**label_to_new_label, 0: 0})
+            new_seg = np.maximum(new_seg, new_layer)
+        seg_arr = new_seg
 
     if len(label_to_bone) == 0:  # probably a whole-body crop; hopefully labels are already good
         assert seg_arr.min() == 0 and seg_arr.max() <= 4
