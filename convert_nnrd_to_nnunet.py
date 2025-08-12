@@ -109,24 +109,20 @@ def convert_legs(training_legs, testing_legs, dataset_dir, binarise):
     # print(f"Processed {len(training_legs)} training cases and {len(testing_legs)} test cases")
 
 
-def create_or_update_json(datasets_dir, dataset_name, num_training, num_testing, label_name_to_value):
-    dataset_dir = f"{datasets_dir}/{dataset_name}"
-    try:
-        with open(f"{dataset_dir}/dataset.json", "r") as f:
-            dataset_json = json.load(f)
-    except:
-        # If no existing file, create minimal structure
-        dataset_json = {
-            "channel_names": {
-                "0": "CT"
-            },
-            "labels": label_name_to_value,
-            "numTraining": num_training,
-            "numTest": num_testing,
-            "file_ending": ".nii.gz",
-        }
+def create_json(datasets_dir, dataset_name, num_training, num_testing, label_name_to_value):
 
-    # Save updated dataset.json
+    dataset_dir = f"{datasets_dir}/{dataset_name}"
+
+    dataset_json = {
+        "channel_names": {
+            "0": "CT"
+        },
+        "labels": label_name_to_value,
+        "numTraining": num_training,
+        "numTest": num_testing,
+        "file_ending": ".nii.gz",
+    }
+
     with open(f"{dataset_dir}/dataset.json", "w") as f:
         json.dump(dataset_json, f, indent=4)
 
@@ -140,11 +136,11 @@ def main():
 
     binary_dataset_name = "Dataset001_Ankle_Binary"
     convert_legs(training_legs, testing_legs, f'{datasets_dir}/{binary_dataset_name}', binarise=True)
-    create_or_update_json(datasets_dir, binary_dataset_name, len(training_legs), len(testing_legs), {'background': 0, 'bone': 1})
+    create_json(datasets_dir, binary_dataset_name, len(training_legs), len(testing_legs), {'background': 0, 'bone': 1})
 
     multiclass_dataset_name = "Dataset002_Ankle_Multiclass"
     convert_legs(training_legs, testing_legs, f'{datasets_dir}/{multiclass_dataset_name}', binarise=False)
-    create_or_update_json(datasets_dir, multiclass_dataset_name, len(training_legs), len(testing_legs), {'background': 0, **bone_name_to_label})
+    create_json(datasets_dir, multiclass_dataset_name, len(training_legs), len(testing_legs), {'background': 0, **bone_name_to_label})
 
 
 if __name__ == "__main__":
