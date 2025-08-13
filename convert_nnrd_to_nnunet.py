@@ -23,21 +23,29 @@ def get_legs():
     leg_dirs = sorted(glob.glob(f'{nrrds_dir}/*'))
 
     # Extract all leg files
-    all_legs = []
+    annotated_legs = []
+    unannotated_legs = []
     for leg_dir in leg_dirs:
         dir_name = os.path.basename(leg_dir)
         filenames = os.listdir(leg_dir)
         maybe_segmentation = [f for f in filenames if 'seg' in f.lower()]
         maybe_ct = [f for f in filenames if f not in maybe_segmentation]
-        assert len(maybe_segmentation) == len(maybe_ct) == 1
-        all_legs.append({
-            "dir": dir_name,
-            "ct_path": os.path.join(leg_dir, maybe_ct[0]),
-            "seg_path": os.path.join(leg_dir, maybe_segmentation[0])
-        })
+        assert len(maybe_ct) == 1 and len(maybe_segmentation) in [0, 1]
+        ct_path = os.path.join(leg_dir, maybe_ct[0])
+        if len(maybe_segmentation) == 1:
+            annotated_legs.append({
+                "dir": dir_name,
+                "ct_path": ct_path,
+                "seg_path": os.path.join(leg_dir, maybe_segmentation[0])
+            })
+        else:
+            unannotated_legs.append({
+                "dir": dir_name,
+                "ct_path": ct_path,
+            })
 
-    print(f'found {len(all_legs)} legs')
-    return all_legs
+    print(f'found {len(annotated_legs)} annotated legs and {len(unannotated_legs)} unannotated legs')
+    return annotated_legs, unannotated_legs
 
 
 def relabel(seg_nrrd, binary_or_multiclass):
@@ -111,26 +119,14 @@ def convert_legs(training_legs, testing_legs, dataset_dir, binarise):
 
         print(f"Processed training case {case_id}: {leg['dir']}")
 
-    #
-    # # Convert and organize test cases
-    # # TODO: check & update
-    # os.makedirs(imagesTs, exist_ok=True)
-    # os.makedirs(labelsTs, exist_ok=True)
-    # for i, leg in enumerate(testing_legs):
-    #     case_id = f"ankle_{i+6:04d}"
-    #
-    #     # Convert CT to NIfTI
-    #     ct_img = sitk.ReadImage(leg["ct_path"])
-    #     sitk.WriteImage(ct_img, f"{imagesTs}/{case_id}_0000.nii.gz")
-    #
-    #     # Convert segmentation to NIfTI
-    #     seg_img = sitk.ReadImage(leg["seg_path"])
-    #     sitk.WriteImage(seg_img, f"{labelsTs}/{case_id}.nii.gz")
-    #
-    #     print(f"Processed test case {case_id}: {leg['dir']} {leg['leg']}")
-    #
-    #
-    # print(f"Processed {len(training_legs)} training cases and {len(testing_legs)} test cases")
+    # Convert and organize testing cases
+    os.makedirs(f"{dataset_dir}/imagesTs", exist_ok=True)
+    for i, leg in enumerate(testing_legs):
+        case_id = f"ankle_{i + len(training_legs):04d}"
+        ct_img = sitk.ReadImage(leg["ct_path"])
+        sitk.WriteImage(ct_img, f"{dataset_dir}/imagesTs/{case_id}_0000.nii.gz")
+
+        print(f"Processed testing case {case_id}: {leg['dir']}")
 
 
 def create_json(datasets_dir, dataset_name, num_training, num_testing, label_name_to_value):
@@ -153,10 +149,7 @@ def create_json(datasets_dir, dataset_name, num_training, num_testing, label_nam
 
 def main():
 
-    all_legs = get_legs()
-
-    training_legs = all_legs[:]
-    testing_legs = []
+    training_legs, testing_legs = get_legs()
 
     binary_dataset_name = "Dataset001_Ankle_Binary"
     convert_legs(training_legs, testing_legs, f'{datasets_dir}/{binary_dataset_name}', binarise=True)
