@@ -1,5 +1,6 @@
 [
-  {"train":  ["ankle_0000", "ankle_0001", "ankle_0002", "ankle_0003", "ankle_0004", "ankle_0005", "ankle_0007", "ankle_0008"], "val":  ["ankle_0006"]},
-  {"train":  ["ankle_0000", "ankle_0001", "ankle_0002", "ankle_0003", "ankle_0004", "ankle_0005", "ankle_0006", "ankle_0008"], "val":  ["ankle_0007"]},
-  {"train":  ["ankle_0000", "ankle_0001", "ankle_0002", "ankle_0003", "ankle_0004", "ankle_0005", "ankle_0006", "ankle_0007"], "val":  ["ankle_0008"]}
+  {"train":  ["ankle_0000", "ankle_0001", "ankle_0002", "ankle_0003", "ankle_0004", "ankle_0005", "ankle_0007", "ankle_0008", "ankle_0009", "ankle_0010"], "val":  ["ankle_0006"]},
+  {"train":  ["ankle_0000", "ankle_0001", "ankle_0002", "ankle_0003", "ankle_0004", "ankle_0005", "ankle_0006", "ankle_0007", "ankle_0009", "ankle_0010"], "val":  ["ankle_0008"]},
+  {"train":  ["ankle_0000", "ankle_0001", "ankle_0002", "ankle_0003", "ankle_0004", "ankle_0005", "ankle_0006", "ankle_0007", "ankle_0008", "ankle_0010"], "val":  ["ankle_0009"]},
+  {"train":  ["ankle_0000", "ankle_0001", "ankle_0002", "ankle_0003", "ankle_0004", "ankle_0005", "ankle_0006", "ankle_0007", "ankle_0008", "ankle_0009"], "val":  ["ankle_0010"]}
 ]
