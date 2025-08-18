@@ -6,6 +6,7 @@ import fastremap
 import numpy as np
 import SimpleITK as sitk
 from collections import defaultdict
+from scipy.ndimage import binary_dilation
 
 
 nrrds_dir = "/home/paul/projects/orthovis/ankle-data/split-and-curated"
@@ -48,7 +49,32 @@ def get_legs():
     return annotated_legs, unannotated_legs
 
 
-def relabel(seg_nrrd, binary_or_multiclass):
+def find_cuts_mask(seg_arr):
+    
+    # Find boundary voxels between different foreground labels.
+    is_cut = np.zeros_like(seg_arr, dtype=bool)
+    for axis in range(3):
+        for direction in [-1, 1]:
+            slices_current = [slice(None)] * 3
+            slices_neighbor = [slice(None)] * 3
+            if direction == -1:
+                slices_current[axis] = slice(1, None)
+                slices_neighbor[axis] = slice(None, -1)
+            else:
+                slices_current[axis] = slice(None, -1)
+                slices_neighbor[axis] = slice(1, None)
+            current = seg_arr[tuple(slices_current)]
+            neighbor = seg_arr[tuple(slices_neighbor)]
+            boundary = (current != 0) & (neighbor != 0) & (current != neighbor)
+            is_cut[tuple(slices_current)] |= boundary
+
+    is_cut_dilated = binary_dilation(is_cut, iterations=2)
+    is_cut = np.where(seg_arr == 0, 0, is_cut_dilated)
+
+    return is_cut
+
+
+def relabel(seg_nrrd, mode):
     seg_arr = sitk.GetArrayFromImage(seg_nrrd)
     ids = [int(key.split('_')[0][7:]) for key in seg_nrrd.GetMetaDataKeys() if re.match(r'Segment\d+_LabelValue', key)]
     assert len(ids) == len(set(ids)), 'Duplicate IDs found'
@@ -89,9 +115,9 @@ def relabel(seg_nrrd, binary_or_multiclass):
         if label > 0:
             assert label in label_to_bone, f'Label {label} not found in label_to_bone'
 
-    if binary_or_multiclass == 'binary':
+    if mode == 'binary' or mode == 'bone_and_cuts':
         instance_label_to_class_label = {0: 0, **{label: 1 for label in label_to_bone.keys()}}
-    elif binary_or_multiclass == 'multiclass':
+    elif mode == 'multiclass':
         instance_label_to_class_label = {
             **{instance_label: bone_name_to_label[bone_name.lower()] for instance_label, bone_name in label_to_bone.items()},
             0: 0
@@ -100,12 +126,17 @@ def relabel(seg_nrrd, binary_or_multiclass):
         assert False
 
     labels_remapped = fastremap.remap(seg_arr, instance_label_to_class_label)
+
+    if mode == 'bone_and_cuts':
+        is_cut = find_cuts_mask(seg_arr)
+        labels_remapped = np.where(is_cut, 2, labels_remapped)
+
     labels_remapped_img = sitk.GetImageFromArray(labels_remapped)
     labels_remapped_img.CopyInformation(seg_nrrd)
     return labels_remapped_img
 
 
-def convert_legs(training_legs, testing_legs, dataset_dir, binarise):
+def convert_legs(training_legs, testing_legs, dataset_dir, mode):
     # Convert and organize training cases
     os.makedirs(f"{dataset_dir}/imagesTr", exist_ok=True)
     os.makedirs(f"{dataset_dir}/labelsTr", exist_ok=True)
@@ -114,7 +145,7 @@ def convert_legs(training_legs, testing_legs, dataset_dir, binarise):
         ct_img = sitk.ReadImage(leg["ct_path"])
         sitk.WriteImage(ct_img, f"{dataset_dir}/imagesTr/{case_id}_0000.nii.gz")
         seg_img = sitk.ReadImage(leg["seg_path"])
-        seg_img = relabel(seg_img, 'binary' if binarise else 'multiclass')
+        seg_img = relabel(seg_img, mode)
         sitk.WriteImage(seg_img, f"{dataset_dir}/labelsTr/{case_id}.nii.gz")
 
         print(f"Processed training case {case_id}: {leg['dir']}")
@@ -152,12 +183,16 @@ def main():
     training_legs, testing_legs = get_legs()
 
     binary_dataset_name = "Dataset001_Ankle_Binary"
-    convert_legs(training_legs, testing_legs, f'{datasets_dir}/{binary_dataset_name}', binarise=True)
+    convert_legs(training_legs, testing_legs, f'{datasets_dir}/{binary_dataset_name}', mode='binary')
     create_json(datasets_dir, binary_dataset_name, len(training_legs), len(testing_legs), {'background': 0, 'bone': 1})
 
     multiclass_dataset_name = "Dataset002_Ankle_Multiclass"
-    convert_legs(training_legs, testing_legs, f'{datasets_dir}/{multiclass_dataset_name}', binarise=False)
+    convert_legs(training_legs, testing_legs, f'{datasets_dir}/{multiclass_dataset_name}', mode='multiclass')
     create_json(datasets_dir, multiclass_dataset_name, len(training_legs), len(testing_legs), {'background': 0, **bone_name_to_label})
+
+    cuts_dataset_name = "Dataset003_Ankle_BoneAndCuts"
+    convert_legs(training_legs, testing_legs, f'{datasets_dir}/{cuts_dataset_name}', mode='bone_and_cuts')
+    create_json(datasets_dir, cuts_dataset_name, len(training_legs), len(testing_legs), {'background': 0, 'bone': 1, 'cut': 2})
 
 
 if __name__ == "__main__":
