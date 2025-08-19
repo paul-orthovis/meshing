@@ -49,9 +49,22 @@ def get_legs():
     return annotated_legs, unannotated_legs
 
 
-def find_cuts_mask(seg_arr):
+def find_cuts_mask(seg_arr, margin=1):
+
+    if margin > 0:
+        # Dilate each label separately into background regions, so we later count near-touching labels as if touching
+        seg_dilated = np.zeros_like(seg_arr)
+        for label in np.unique(seg_arr):
+            if label == 0:
+                continue
+            label_mask = seg_arr == label
+            for _ in range(margin):
+                label_mask = binary_dilation(label_mask) & (seg_dilated == 0)
+                seg_dilated[label_mask] = label
+    else:
+        seg_dilated = seg_arr
     
-    # Find boundary voxels between different foreground labels.
+    # Find boundary voxels between different foreground labels
     is_cut = np.zeros_like(seg_arr, dtype=bool)
     for axis in range(3):
         for direction in [-1, 1]:
@@ -63,8 +76,8 @@ def find_cuts_mask(seg_arr):
             else:
                 slices_current[axis] = slice(None, -1)
                 slices_neighbor[axis] = slice(1, None)
-            current = seg_arr[tuple(slices_current)]
-            neighbor = seg_arr[tuple(slices_neighbor)]
+            current = seg_dilated[tuple(slices_current)]
+            neighbor = seg_dilated[tuple(slices_neighbor)]
             boundary = (current != 0) & (neighbor != 0) & (current != neighbor)
             is_cut[tuple(slices_current)] |= boundary
 
