@@ -16,7 +16,6 @@ bone_name_to_label = {
     "tibia": 1,
     "fibula": 2,
     "talus": 3,
-    "calcaneus": 4
 }
 
 
@@ -121,7 +120,7 @@ def relabel(seg_nrrd, mode):
         seg_arr = new_seg
 
     if len(label_to_bone) == 0:  # probably a whole-body crop; hopefully labels are already good
-        assert seg_arr.min() == 0 and seg_arr.max() <= 4
+        assert seg_arr.min() == 0 and seg_arr.max() <= 3
         label_to_bone = {label: bone for bone, label in bone_name_to_label.items()}
 
     for label in fastremap.unique(seg_arr):
