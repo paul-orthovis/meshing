@@ -115,21 +115,27 @@ def relabel(seg_nrrd, mode):
         if label > 0:
             assert label in label_to_bone, f'Label {label} not found in label_to_bone'
 
-    if mode == 'binary' or mode == 'bone_and_cuts':
-        instance_label_to_class_label = {0: 0, **{label: 1 for label in label_to_bone.keys()}}
-    elif mode == 'multiclass':
-        instance_label_to_class_label = {
-            **{instance_label: bone_name_to_label[bone_name.lower()] for instance_label, bone_name in label_to_bone.items()},
-            0: 0
-        }
+    if mode != 'cuts_only':
+
+        if mode == 'binary' or mode == 'bone_and_cuts':
+            instance_label_to_class_label = {0: 0, **{label: 1 for label in label_to_bone.keys()}}
+        elif mode == 'multiclass':
+            instance_label_to_class_label = {
+                **{instance_label: bone_name_to_label[bone_name.lower()] for instance_label, bone_name in label_to_bone.items()},
+                0: 0
+            }
+        else:
+            assert False
+
+        labels_remapped = fastremap.remap(seg_arr, instance_label_to_class_label)
+
+        if mode == 'bone_and_cuts':
+            is_cut = find_cuts_mask(seg_arr)
+            labels_remapped = np.where(is_cut, 2, labels_remapped)
+
     else:
-        assert False
-
-    labels_remapped = fastremap.remap(seg_arr, instance_label_to_class_label)
-
-    if mode == 'bone_and_cuts':
         is_cut = find_cuts_mask(seg_arr)
-        labels_remapped = np.where(is_cut, 2, labels_remapped)
+        labels_remapped = np.where(is_cut, 1, 0)
 
     labels_remapped_img = sitk.GetImageFromArray(labels_remapped)
     labels_remapped_img.CopyInformation(seg_nrrd)
@@ -193,6 +199,10 @@ def main():
     cuts_dataset_name = "Dataset003_Ankle_BoneAndCuts"
     convert_legs(training_legs, testing_legs, f'{datasets_dir}/{cuts_dataset_name}', mode='bone_and_cuts')
     create_json(datasets_dir, cuts_dataset_name, len(training_legs), len(testing_legs), {'background': 0, 'bone': 1, 'cut': 2})
+
+    cuts_dataset_name = "Dataset004_Ankle_CutsOnly"
+    convert_legs(training_legs, testing_legs, f'{datasets_dir}/{cuts_dataset_name}', mode='cuts_only')
+    create_json(datasets_dir, cuts_dataset_name, len(training_legs), len(testing_legs), {'background': 0, 'cut': 1})
 
 
 if __name__ == "__main__":
