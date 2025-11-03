@@ -159,23 +159,23 @@ def convert_legs(training_legs, testing_legs, dataset_dir, mode):
     os.makedirs(f"{dataset_dir}/imagesTr", exist_ok=True)
     os.makedirs(f"{dataset_dir}/labelsTr", exist_ok=True)
     for i, leg in enumerate(training_legs):
-        case_id = f"ankle_{i:04d}"
+        case_id = leg["dir"]
         ct_img = sitk.ReadImage(leg["ct_path"])
         sitk.WriteImage(ct_img, f"{dataset_dir}/imagesTr/{case_id}_0000.nii.gz")
         seg_img = sitk.ReadImage(leg["seg_path"])
         seg_img = relabel(seg_img, mode)
         sitk.WriteImage(seg_img, f"{dataset_dir}/labelsTr/{case_id}.nii.gz")
 
-        print(f"Processed training case {case_id}: {leg['dir']}")
+        print(f"Processed training case {case_id}")
 
     # Convert and organize testing cases
     os.makedirs(f"{dataset_dir}/imagesTs", exist_ok=True)
     for i, leg in enumerate(testing_legs):
-        case_id = f"ankle_{i + len(training_legs):04d}"
+        case_id = leg["dir"]
         ct_img = sitk.ReadImage(leg["ct_path"])
         sitk.WriteImage(ct_img, f"{dataset_dir}/imagesTs/{case_id}_0000.nii.gz")
 
-        print(f"Processed testing case {case_id}: {leg['dir']}")
+        print(f"Processed testing case {case_id}")
 
 
 def create_json(datasets_dir, dataset_name, num_training, num_testing, label_name_to_value):
@@ -201,18 +201,22 @@ def main():
     training_legs, testing_legs = get_legs()
 
     binary_dataset_name = "Dataset001_Ankle_Binary"
+    print(f"Creating {binary_dataset_name}...")
     convert_legs(training_legs, testing_legs, f'{datasets_dir}/{binary_dataset_name}', mode='binary')
     create_json(datasets_dir, binary_dataset_name, len(training_legs), len(testing_legs), {'background': 0, 'bone': 1})
 
     multiclass_dataset_name = "Dataset002_Ankle_Multiclass"
+    print(f"Creating {multiclass_dataset_name}...")
     convert_legs(training_legs, testing_legs, f'{datasets_dir}/{multiclass_dataset_name}', mode='multiclass')
     create_json(datasets_dir, multiclass_dataset_name, len(training_legs), len(testing_legs), {'background': 0, **bone_name_to_label})
 
     cuts_dataset_name = "Dataset003_Ankle_BoneAndCuts"
+    print(f"Creating {cuts_dataset_name}...")
     convert_legs(training_legs, testing_legs, f'{datasets_dir}/{cuts_dataset_name}', mode='bone_and_cuts')
     create_json(datasets_dir, cuts_dataset_name, len(training_legs), len(testing_legs), {'background': 0, 'bone': 1, 'cut': 2})
 
     cuts_dataset_name = "Dataset004_Ankle_CutsOnly"
+    print(f"Creating {cuts_dataset_name}...")
     convert_legs(training_legs, testing_legs, f'{datasets_dir}/{cuts_dataset_name}', mode='cuts_only')
     create_json(datasets_dir, cuts_dataset_name, len(training_legs), len(testing_legs), {'background': 0, 'cut': 1})
 
