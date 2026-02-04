@@ -136,6 +136,9 @@ def relabel(seg_nrrd, mode):
                 **{instance_label: bone_name_to_label[bone_name.lower()] for instance_label, bone_name in label_to_bone.items()},
                 0: 0
             }
+        elif mode == 'instances':
+            instance_labels = [label for label in fastremap.unique(seg_arr) if label > 0]
+            instance_label_to_class_label = {0: 0, **{label: i + 1 for i, label in enumerate(instance_labels)}}
         else:
             assert False
 
@@ -158,24 +161,36 @@ def convert_legs(training_legs, testing_legs, dataset_dir, mode):
     # Convert and organize training cases
     os.makedirs(f"{dataset_dir}/imagesTr", exist_ok=True)
     os.makedirs(f"{dataset_dir}/labelsTr", exist_ok=True)
+    max_instances = 0
     for i, leg in enumerate(training_legs):
         case_id = leg["dir"]
+        print(f"Processing training case {case_id}...")
         ct_img = sitk.ReadImage(leg["ct_path"])
         sitk.WriteImage(ct_img, f"{dataset_dir}/imagesTr/{case_id}_0000.nii.gz")
         seg_img = sitk.ReadImage(leg["seg_path"])
         seg_img = relabel(seg_img, mode)
         sitk.WriteImage(seg_img, f"{dataset_dir}/labelsTr/{case_id}.nii.gz")
 
-        print(f"Processed training case {case_id}")
+        if mode == 'instances':
+            seg_arr = sitk.GetArrayFromImage(seg_img)
+            num_instances = len([label for label in fastremap.unique(seg_arr) if label > 0])
+            max_instances = max(max_instances, num_instances)
+            print(f"Processed training case {case_id} ({num_instances} instances)")
+        else:
+            print(f"Processed training case {case_id}")
 
     # Convert and organize testing cases
     os.makedirs(f"{dataset_dir}/imagesTs", exist_ok=True)
     for i, leg in enumerate(testing_legs):
         case_id = leg["dir"]
+        print(f"Processing testing case {case_id}...")
         ct_img = sitk.ReadImage(leg["ct_path"])
         sitk.WriteImage(ct_img, f"{dataset_dir}/imagesTs/{case_id}_0000.nii.gz")
 
         print(f"Processed testing case {case_id}")
+
+    if mode == 'instances':
+        return max_instances
 
 
 def create_json(datasets_dir, dataset_name, num_training, num_testing, label_name_to_value):
@@ -219,6 +234,13 @@ def main():
     print(f"Creating {cuts_dataset_name}...")
     convert_legs(training_legs, testing_legs, f'{datasets_dir}/{cuts_dataset_name}', mode='cuts_only')
     create_json(datasets_dir, cuts_dataset_name, len(training_legs), len(testing_legs), {'background': 0, 'cut': 1})
+
+    instances_dataset_name = "Dataset005_Ankle_Instances"
+    print(f"Creating {instances_dataset_name}...")
+    max_instances = convert_legs(training_legs, testing_legs, f'{datasets_dir}/{instances_dataset_name}', mode='instances')
+    fragment_labels = {'background': 0, **{f'Fragment{i:02d}': i for i in range(1, max_instances + 1)}}
+    create_json(datasets_dir, instances_dataset_name, len(training_legs), len(testing_legs), fragment_labels)
+    print(f"Max fragments across scans: {max_instances}")
 
 
 if __name__ == "__main__":
