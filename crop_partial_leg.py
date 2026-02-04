@@ -6,17 +6,22 @@ import SimpleITK as sitk
 original_folder = '/home/paul/projects/orthovis/ankle-data/from-annotators-and-daniela'
 converted_folder = '/home/paul/projects/orthovis/ankle-data/split-and-curated_cortical-only_2026-01'
 
-# For each leg, specify whether to crop "top", "bottom", or "both".
-# "top" refers to low z indices; "bottom" refers to high z indices.
+# For each leg, specify whether to crop away "top", "bottom", or "both".
+# "top" refers to high z indices; "bottom" refers to low z indices.
 scans = {
+    'PILON2': {
+        'ct_subpath': 'cleaned_2026-02-02/4 Unnamed Series.nrrd',
+        'seg_subpath': 'cleaned_2026-02-02/Segmentation.nrrd',
+        'crop_note': 'bottom',
+    },
     'PILON14': {
         'ct_subpath': 'from-ahmed_2025-12-16/3 Unnamed Series.nrrd',
-        'seg_subpath': 'cleaned_2026-01-26/Segmentation.nrrd',
+        'seg_subpath': 'cleaned_2026-02-04/Segmentation.nrrd',
         'crop_note': 'top',
     },
     'PILON16': {
         'ct_subpath': 'from-ahmed_2025-12-16/3 Unnamed Series.nrrd',
-        'seg_subpath': 'cleaned_2026-01-26/Segmentation.nrrd',
+        'seg_subpath': 'cleaned_2026-02-04/Segmentation.nrrd',
         'crop_note': 'top',
     },
 }
@@ -45,8 +50,8 @@ def get_crop_indices(seg_array, crop_note):
     crop_top = crop_note in {"top", "both"}
     crop_bottom = crop_note in {"bottom", "both"}
 
-    z_start = z_min if crop_top else 0
-    z_end = (z_max + 1) if crop_bottom else seg_array.shape[0]
+    z_start = z_min if crop_bottom else 0
+    z_end = (z_max + 1) if crop_top else seg_array.shape[0]
 
     if z_start >= z_end:
         raise ValueError(f"Invalid crop range: start={z_start}, end={z_end}.")
@@ -70,7 +75,8 @@ def save_cropped(ct_arr, seg_arr, save_dir, original_ct_img, original_seg_img, z
 
     seg_img.CopyInformation(ct_img)
     for key in original_seg_img.GetMetaDataKeys():
-        seg_img.SetMetaData(key, original_seg_img.GetMetaData(key))
+        if not key.endswith('_Extent'):  # drop segment extents since they're not valid anymore and confuse 3d-slicer
+            seg_img.SetMetaData(key, original_seg_img.GetMetaData(key))
 
     ct_path = os.path.join(save_dir, "ct.nrrd")
     seg_path = os.path.join(save_dir, "seg.nrrd")
