@@ -9,8 +9,8 @@ from collections import defaultdict
 from scipy.ndimage import binary_dilation
 
 
-nrrds_dir = "/home/paul/projects/orthovis/ankle-data/split-and-curated"
-datasets_dir = f"/home/paul/projects/orthovis/ankle-data/nnUNet_raw"
+nrrds_dir = "/home/paul/projects/orthovis/ankle-data/split-and-curated_cortical-only_2026-01"
+datasets_dir = f"/home/paul/projects/orthovis/ankle-data/nnUNet_raw_2026-02-05"
 
 bone_name_to_label = {
     "tibia": 1,
@@ -215,25 +215,25 @@ def main():
 
     training_legs, testing_legs = get_legs()
 
-    binary_dataset_name = "Dataset001_Ankle_Binary"
-    print(f"Creating {binary_dataset_name}...")
-    convert_legs(training_legs, testing_legs, f'{datasets_dir}/{binary_dataset_name}', mode='binary')
-    create_json(datasets_dir, binary_dataset_name, len(training_legs), len(testing_legs), {'background': 0, 'bone': 1})
+    # binary_dataset_name = "Dataset001_Ankle_Binary"
+    # print(f"Creating {binary_dataset_name}...")
+    # convert_legs(training_legs, testing_legs, f'{datasets_dir}/{binary_dataset_name}', mode='binary')
+    # create_json(datasets_dir, binary_dataset_name, len(training_legs), len(testing_legs), {'background': 0, 'bone': 1})
 
-    multiclass_dataset_name = "Dataset002_Ankle_Multiclass"
-    print(f"Creating {multiclass_dataset_name}...")
-    convert_legs(training_legs, testing_legs, f'{datasets_dir}/{multiclass_dataset_name}', mode='multiclass')
-    create_json(datasets_dir, multiclass_dataset_name, len(training_legs), len(testing_legs), {'background': 0, **bone_name_to_label})
+    # multiclass_dataset_name = "Dataset002_Ankle_Multiclass"
+    # print(f"Creating {multiclass_dataset_name}...")
+    # convert_legs(training_legs, testing_legs, f'{datasets_dir}/{multiclass_dataset_name}', mode='multiclass')
+    # create_json(datasets_dir, multiclass_dataset_name, len(training_legs), len(testing_legs), {'background': 0, **bone_name_to_label})
 
     cuts_dataset_name = "Dataset003_Ankle_BoneAndCuts"
     print(f"Creating {cuts_dataset_name}...")
     convert_legs(training_legs, testing_legs, f'{datasets_dir}/{cuts_dataset_name}', mode='bone_and_cuts')
     create_json(datasets_dir, cuts_dataset_name, len(training_legs), len(testing_legs), {'background': 0, 'bone': 1, 'cut': 2})
 
-    cuts_dataset_name = "Dataset004_Ankle_CutsOnly"
-    print(f"Creating {cuts_dataset_name}...")
-    convert_legs(training_legs, testing_legs, f'{datasets_dir}/{cuts_dataset_name}', mode='cuts_only')
-    create_json(datasets_dir, cuts_dataset_name, len(training_legs), len(testing_legs), {'background': 0, 'cut': 1})
+    # cuts_dataset_name = "Dataset004_Ankle_CutsOnly"
+    # print(f"Creating {cuts_dataset_name}...")
+    # convert_legs(training_legs, testing_legs, f'{datasets_dir}/{cuts_dataset_name}', mode='cuts_only')
+    # create_json(datasets_dir, cuts_dataset_name, len(training_legs), len(testing_legs), {'background': 0, 'cut': 1})
 
     instances_dataset_name = "Dataset005_Ankle_Instances"
     print(f"Creating {instances_dataset_name}...")

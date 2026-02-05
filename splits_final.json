@@ -1,6 +1,98 @@
 [
-  {"train":  ["ankle_0000", "ankle_0001", "ankle_0002", "ankle_0003", "ankle_0004", "ankle_0005", "ankle_0007", "ankle_0008", "ankle_0009", "ankle_0010"], "val":  ["ankle_0006"]},
-  {"train":  ["ankle_0000", "ankle_0001", "ankle_0002", "ankle_0003", "ankle_0004", "ankle_0005", "ankle_0006", "ankle_0007", "ankle_0009", "ankle_0010"], "val":  ["ankle_0008"]},
-  {"train":  ["ankle_0000", "ankle_0001", "ankle_0002", "ankle_0003", "ankle_0004", "ankle_0005", "ankle_0006", "ankle_0007", "ankle_0008", "ankle_0010"], "val":  ["ankle_0009"]},
-  {"train":  ["ankle_0000", "ankle_0001", "ankle_0002", "ankle_0003", "ankle_0004", "ankle_0005", "ankle_0006", "ankle_0007", "ankle_0008", "ankle_0009"], "val":  ["ankle_0010"]}
+  {
+    "train": [
+      "CT1_first-leg",
+      "CT1_second-leg",
+      "CT2_first-leg",
+      "CT2_second-leg",
+      "CT4_first-leg",
+      "CT4_second-leg",
+      "PILON1",
+      "PILON2",
+      "PILON3_s3",
+      "PILON3_s4",
+      "PILON5",
+      "PILON6",
+      "PILON8",
+      "PILON10",
+      "PILON11",
+      "PILON14",
+      "PILON16"
+    ],
+    "val": [
+      "PILON7"
+    ]
+  },
+  {
+    "train": [
+      "CT1_first-leg",
+      "CT1_second-leg",
+      "CT2_first-leg",
+      "CT2_second-leg",
+      "CT4_first-leg",
+      "CT4_second-leg",
+      "PILON1",
+      "PILON2",
+      "PILON3_s3",
+      "PILON3_s4",
+      "PILON5",
+      "PILON6",
+      "PILON7",
+      "PILON10",
+      "PILON11",
+      "PILON14",
+      "PILON16"
+    ],
+    "val": [
+      "PILON8"
+    ]
+  },
+  {
+    "train": [
+      "CT1_first-leg",
+      "CT1_second-leg",
+      "CT2_first-leg",
+      "CT2_second-leg",
+      "CT4_first-leg",
+      "CT4_second-leg",
+      "PILON1",
+      "PILON2",
+      "PILON3_s3",
+      "PILON3_s4",
+      "PILON5",
+      "PILON6",
+      "PILON7",
+      "PILON8",
+      "PILON11",
+      "PILON14",
+      "PILON16"
+    ],
+    "val": [
+      "PILON10"
+    ]
+  },
+  {
+    "train": [
+      "CT1_first-leg",
+      "CT1_second-leg",
+      "CT2_first-leg",
+      "CT2_second-leg",
+      "CT4_first-leg",
+      "CT4_second-leg",
+      "PILON1",
+      "PILON2",
+      "PILON3_s3",
+      "PILON3_s4",
+      "PILON5",
+      "PILON6",
+      "PILON7",
+      "PILON8",
+      "PILON10",
+      "PILON14",
+      "PILON16"
+    ],
+    "val": [
+      "PILON11"
+    ]
+  }
 ]
