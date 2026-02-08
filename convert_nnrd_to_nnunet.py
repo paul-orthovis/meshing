@@ -2,6 +2,8 @@ import os
 import re
 import json
 import glob
+import warnings
+import cc3d
 import fastremap
 import numpy as np
 import SimpleITK as sitk
@@ -10,7 +12,7 @@ from scipy.ndimage import binary_dilation
 
 
 nrrds_dir = "/home/paul/projects/orthovis/ankle-data/split-and-curated_cortical-only_2026-01"
-datasets_dir = f"/home/paul/projects/orthovis/ankle-data/nnUNet_raw_2026-02-05"
+datasets_dir = f"/home/paul/projects/orthovis/ankle-data/nnUNet_raw_2026-02-07_ccs"
 
 bone_name_to_label = {
     "tibia": 1,
@@ -46,6 +48,59 @@ def get_legs():
 
     print(f'found {len(annotated_legs)} annotated legs and {len(unannotated_legs)} unannotated legs')
     return annotated_legs, unannotated_legs
+
+
+def preprocess_segments(seg_arr, spacing_mm, min_extent_mm=3.0, max_small_cc_relative=0.01):
+    """Clean up each segment by keeping only the largest connected component.
+    
+    For each segment:
+    1. Keep only the largest CC
+    2. Warn if other CCs exceed relative size threshold AND min_extent_mm in all dimensions
+    3. Drop segment entirely if largest CC extent < min_extent_mm in any dimension
+    """
+    cleaned = np.zeros_like(seg_arr)
+    
+    for label in fastremap.unique(seg_arr):
+        if label == 0:
+            continue
+        
+        mask = seg_arr == label
+        cc_labels, num_cc = cc3d.connected_components(mask, return_N=True)
+        
+        if num_cc == 0:
+            continue
+        
+        stats = cc3d.statistics(cc_labels)
+        voxel_counts = stats['voxel_counts'][1:]  # skip background (index 0)
+        bboxes = stats['bounding_boxes'][1:]
+        
+        largest_idx = np.argmax(voxel_counts)
+        largest_count = voxel_counts[largest_idx]
+        largest_bbox = bboxes[largest_idx]
+        
+        # Check extent of largest CC
+        extents_vox = [largest_bbox[d].stop - largest_bbox[d].start for d in range(3)]
+        extents_mm = [extents_vox[d] * spacing_mm[d] for d in range(3)]
+        if min(extents_mm) < min_extent_mm:
+            warnings.warn(f"Dropping segment {label}: largest CC extent {min(extents_mm):.1f}mm < {min_extent_mm}mm")
+            continue
+        
+        # Check that other CCs are small
+        for i, (count, bbox) in enumerate(zip(voxel_counts, bboxes)):
+            if i == largest_idx:
+                continue
+            rel_size = count / largest_count
+            cc_extents_mm = [(bbox[d].stop - bbox[d].start) * spacing_mm[d] for d in range(3)]
+            if rel_size > max_small_cc_relative and min(cc_extents_mm) >= min_extent_mm:
+                warnings.warn(
+                    f"Segment {label}: discarding CC with {rel_size*100:.1f}% of largest "
+                    f"(extent {min(cc_extents_mm):.1f}mm >= {min_extent_mm}mm)"
+                )
+        
+        # Keep only largest CC
+        cleaned[cc_labels == (largest_idx + 1)] = label
+    
+    return cleaned
 
 
 def find_cuts_mask(seg_arr, margin=1):
@@ -122,6 +177,11 @@ def relabel(seg_nrrd, mode):
     if len(label_to_bone) == 0:  # probably a whole-body crop; hopefully labels are already good
         assert seg_arr.min() == 0 and seg_arr.max() <= 3
         label_to_bone = {label: bone for bone, label in bone_name_to_label.items()}
+
+    # Preprocess: keep only largest CC per segment, drop tiny segments
+    spacing = seg_nrrd.GetSpacing()  # (x, y, z) in mm
+    spacing_zyx = (spacing[2], spacing[1], spacing[0])
+    seg_arr = preprocess_segments(seg_arr, spacing_zyx)
 
     for label in fastremap.unique(seg_arr):
         if label > 0:
