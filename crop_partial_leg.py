@@ -4,14 +4,14 @@ import SimpleITK as sitk
 
 
 original_folder = '/home/paul/projects/orthovis/ankle-data/from-annotators-and-daniela'
-converted_folder = '/home/paul/projects/orthovis/ankle-data/split-and-curated_cortical-only_2026-01'
+converted_folder = '/home/paul/projects/orthovis/ankle-data/split-and-curated_cortical-only_2026-02'
 
 # For each leg, specify whether to crop away "top", "bottom", or "both".
 # "top" refers to high z indices; "bottom" refers to low z indices.
 scans = {
     'PILON2': {
-        'ct_subpath': 'cleaned_2026-02-02/4 Unnamed Series.nrrd',
-        'seg_subpath': 'cleaned_2026-02-02/Segmentation.nrrd',
+        'ct_subpath': 'cleaned_2026-02-09/4 Unnamed Series.nrrd',
+        'seg_subpath': 'cleaned_2026-02-09/Segmentation.nrrd',
         'crop_note': 'bottom',
     },
     'PILON14': {

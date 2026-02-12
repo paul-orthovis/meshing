@@ -19,7 +19,7 @@
 
 - do nnUNet preprocessing and planning
   - `. prepare_nnunet.sh` for environment
-  - `nnUNetv2_plan_and_preprocess -d 003 005 -c 3d_fullres --clean --verify_dataset_integrity --verbose -np 2`
+  - `nnUNetv2_plan_and_preprocess -d 003 005 -c 3d_fullres --clean --verify_dataset_integrity --verbose -np 1`
 
 - create splits json -- currently manual; see `splits_final.json` in this folder, copy to both nnunet
   processed datasets folders

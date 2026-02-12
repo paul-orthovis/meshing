@@ -11,8 +11,8 @@ from collections import defaultdict
 from scipy.ndimage import binary_dilation
 
 
-nrrds_dir = "/home/paul/projects/orthovis/ankle-data/split-and-curated_cortical-only_2026-01"
-datasets_dir = f"/home/paul/projects/orthovis/ankle-data/nnUNet_raw_2026-02-07_ccs"
+nrrds_dir = "/home/paul/projects/orthovis/ankle-data/split-and-curated_cortical-only_2026-02"
+datasets_dir = f"/home/paul/projects/orthovis/ankle-data/nnUNet_raw_2026-02-11"
 
 bone_name_to_label = {
     "tibia": 1,
