@@ -23,7 +23,7 @@ def sanitize_component(name: str) -> str:
     return re.sub(r"[^A-Za-z0-9._-]+", "_", name).strip("_") or "segment"
 
 
-_REMESH_BIN = Path(__file__).parent.parent.parent / "cgal-tets" / "build" / "remesh_obj"
+_REMESH_BIN = Path(__file__).parent / "cpp" / "remesh_obj"
 
 
 @click.command()
